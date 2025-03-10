@@ -123,14 +123,6 @@ namespace RP0.ProceduralAvionics
         private float GetAvionicsCost() => GetAvionicsCost(GetInternalMassLimit(), CurrentProceduralAvionicsTechNode);
         private static float GetAvionicsCost(float massLimit, ProceduralAvionicsTechNode techNode) => GetPolynomial(massLimit, techNode.costExponent, techNode.costConstant, techNode.costFactor);
         internal float GetAvionicsVolume() => GetAvionicsMass() / CurrentProceduralAvionicsTechNode.avionicsDensity;
-        private float GetShieldedAvionicsMass() => GetShieldedAvionicsMass(GetInternalMassLimit());
-        internal float GetShieldedAvionicsMass(float controllableMass)
-        {
-            var avionicsMass = GetAvionicsMass(controllableMass);
-            return avionicsMass + GetShieldingMass(avionicsMass);
-        }
-
-        private float GetShieldingMass(float avionicsMass) => Mathf.Pow(avionicsMass, 2f / 3) * CurrentProceduralAvionicsTechNode.shieldingMassFactor;
 
         protected override float GetEnabledkW() => GetEnabledkW(CurrentProceduralAvionicsTechNode, GetInternalMassLimit());
         internal static float GetEnabledkW(ProceduralAvionicsTechNode techNode, float controllableMass) => GetPolynomial(controllableMass, techNode.powerExponent, techNode.powerConstant, techNode.powerFactor) / 1000f;
@@ -143,7 +135,7 @@ namespace RP0.ProceduralAvionics
 
         protected override string GetTonnageString() => "This part can be configured to allow control of vessels up to any mass.";
 
-        public float GetModuleMass(float defaultMass, ModifierStagingSituation sit) => CurrentProceduralAvionicsTechNode.avionicsDensity > 0 ? GetShieldedAvionicsMass() : 0;
+        public float GetModuleMass(float defaultMass, ModifierStagingSituation sit) => CurrentProceduralAvionicsTechNode.avionicsDensity > 0 ? GetAvionicsMass() : 0;
         public ModifierChangeWhen GetModuleMassChangeWhen() => ModifierChangeWhen.FIXED;
         public float GetModuleCost(float defaultCost, ModifierStagingSituation sit) => CurrentProceduralAvionicsTechNode.avionicsDensity > 0 ? GetAvionicsCost() : 0;
         public ModifierChangeWhen GetModuleCostChangeWhen() => ModifierChangeWhen.FIXED;
@@ -580,7 +572,7 @@ namespace RP0.ProceduralAvionics
         internal void RefreshDisplays()
         {
             RefreshPowerDisplay();
-            massDisplay = MathUtils.FormatMass(CurrentProceduralAvionicsTechNode.avionicsDensity > 0 ? GetShieldedAvionicsMass() : 0);
+            massDisplay = MathUtils.FormatMass(CurrentProceduralAvionicsTechNode.avionicsDensity > 0 ? GetAvionicsMass() : 0);
             costDisplay = $"{Mathf.Round(CurrentProceduralAvionicsTechNode.avionicsDensity > 0 ? GetAvionicsCost() : 0)}";
             utilizationDisplay = $"{Utilization * 100:0.#}%";
             Log($"RefreshDisplays() Controllable mass: {controllableMass}, mass: {massDisplay} cost: {costDisplay}, Utilization: {utilizationDisplay}");
