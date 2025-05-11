@@ -4413,7 +4413,7 @@
     {
         "name": "evaCylinder",
         "title": "EVA Fuel Cylinders",
-        "description": "",
+        "description": "When you just don't have enough delta-V to visit all your favorite spots on the Moon, or want to circumnavigate Deimos freestyle, you'll want to pack these spare EVA fuel cylinders for extra-long duration EVA trips. Handily transfers fuel to your EVA jetpack with a child-proof safety seal.",
         "mod": "Stock (RO Config)",
         "cost": "1",
         "entry_cost": "1",
