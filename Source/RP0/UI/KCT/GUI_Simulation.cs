@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using UnityEngine;
 using ROUtils;
@@ -237,14 +238,14 @@ namespace RP0
             }
 
             string s1 = "Valid formats: \"1y 2d 3h 4m 5s\" and \"31719845\".";
-            string s2 = "Valid formats: \"1y 2d 3h 4m 5s\", \"31719845\", and \"1960-12-31 23:59:59\".";
+            string s2 = "Valid formats: \"1y 2d 3h 4m 5s\", \"31719845\", \"1960-12-31 23:59:59\", and \"23:59:59\".";
 
             GUILayout.Space(4);
             GUILayout.BeginHorizontal();
             string utFormats = _fromCurrentUT ? s1 : s2;
             string utLabel = isHyperbolic ? "Departure: " : "Time: ";
             string utTooltip = isHyperbolic
-                ? "Departure date (the sim warps to arrival = departure + transfer time). " + utFormats
+                ? $"Departure date (the sim warps to arrival = departure + transfer time). {utFormats}"
                 : utFormats;
             GUILayout.Label(new GUIContent(utLabel, utTooltip));
             _UTString = GUILayout.TextField(_UTString, GUILayout.Width(110));
@@ -600,18 +601,22 @@ namespace RP0
 
             double currentUT = Planetarium.GetUniversalTime();
             double ut = 0;
-            if (_fromCurrentUT && (_UTString.Contains("-") || _UTString.Contains(":"))) // prevent the user from doing 1960-12-31, accidentally selecting "From Now", and then warping 1960 years forward
+            if (!DTUtils.TryParseTimeString(_UTString, isTimespan: !_fromCurrentUT, out ut))
+            {
+                var message = new ScreenMessage("Please enter a valid time value.", 6f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage(message);
+                return;
+            }
+            else if (_fromCurrentUT && (_UTString.Contains("-") || _UTString.Contains(":")))
+                // prevent the user from doing 1960-12-31, accidentally selecting "From Now", and then warping 1960 years forward
             {
                 var message = new ScreenMessage("Value must be of format \"1y 2d 3h 4m 5s\" or \"31719845\" when \"From Now\" is selected.", 6f, ScreenMessageStyle.UPPER_CENTER);
                 ScreenMessages.PostScreenMessage(message);
                 return;
             }
-            else if (!string.IsNullOrWhiteSpace(_UTString) &&
-                     ((_UTString.Contains(":") && !System.Text.RegularExpressions.Regex.IsMatch(_UTString, @"^\d{4}-\d{2}-\d{2}")) ||
-                      !ROUtils.DTUtils.TryParseTimeString(_UTString, isTimespan: !_fromCurrentUT, out ut))) // if string is not empty and ((string has HH:mm but no YYYY-MM-DD) or (string fails TryParseTimeString)), then output failure
+            else if (!_fromCurrentUT&& _UTString.Contains(":") && !Regex.IsMatch(_UTString, @"^\d{4}-\d{2}-\d{2}")) //string has HH:mm but no YYYY-MM-DD
             {
-                var message = new ScreenMessage("Please enter a valid time value.", 6f, ScreenMessageStyle.UPPER_CENTER);
-                ScreenMessages.PostScreenMessage(message);
+                Debug.Log($"currentUT: {Planetarium.GetUniversalTime()}, ut: {ut}, _UTString: {_UTString}");
                 return;
             }
             simParams.DelayMoveSeconds = 0;
